@@ -1,0 +1,44 @@
+# ── Dependencies ──────────────────────────────────────────────────────────────
+/vendor/
+/node_modules/
+
+# ── Environment ──────────────────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+
+# ── Storage (runtime data) ───────────────────────────────────────────────────
+/storage/cache/*
+!/storage/cache/.gitkeep
+/storage/logs/*
+!/storage/logs/.gitkeep
+/storage/reports/*
+!/storage/reports/.gitkeep
+/storage/uploads/*
+!/storage/uploads/.gitkeep
+/storage/*.lock
+
+# ── Public uploads ───────────────────────────────────────────────────────────
+/public/uploads/branding/*
+!/public/uploads/branding/.gitkeep
+
+# ── Testing ──────────────────────────────────────────────────────────────────
+.phpunit.result.cache
+/coverage/
+
+# ── IDE & Editors ────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ── OS Files ─────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── AI Assistants ────────────────────────────────────────────────────────────
+.rooignore
+.roorules
+.clineignore
+.clinerules

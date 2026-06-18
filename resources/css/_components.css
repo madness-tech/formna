@@ -1,0 +1,303 @@
+/* ═══════════════════════════════════════════════════════════════
+   Component Classes
+   Semantic, single-purpose classes for repeated UI patterns.
+   No two classes share the same core style definition.
+   ═══════════════════════════════════════════════════════════════ */
+
+@layer components {
+
+  /* ── Typography ─────────────────────────────────────────────── */
+
+  /* Main page heading — h1 level, 24px semibold */
+  .page-title {
+    @apply text-2xl font-semibold text-gray-900;
+  }
+
+  /* Section heading within a page — h2/h3 level, 18px semibold */
+  .section-title {
+    @apply text-lg font-semibold text-gray-900;
+  }
+
+  /* Standard body/description text — 14px gray-600 */
+  .body-text {
+    @apply text-sm text-gray-600;
+  }
+
+  /* Helper text below inputs or labels — 12px muted */
+  .help-text {
+    @apply text-xs text-gray-500 mt-1;
+  }
+
+  /* Inline field error message — replaces browser tooltip validation */
+  .field-error {
+    @apply text-xs text-red-600 mt-1;
+  }
+
+  /* Uppercase category label — table section headers, stat card eyebrows */
+  .eyebrow {
+    @apply text-xs font-medium text-gray-500 uppercase tracking-wider;
+  }
+
+
+  /* ── Cards ──────────────────────────────────────────────────── */
+
+  /* Base card — white, bordered, rounded. No padding (use card-body). */
+  .card {
+    @apply bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden;
+  }
+
+  /* Standard padded card interior — p-6 */
+  .card-body {
+    @apply p-6;
+  }
+
+  /* Card top section with border-bottom — for titles/headings */
+  .card-header {
+    @apply px-6 py-4 border-b border-gray-200;
+  }
+
+  /* Card bottom section with border-top — for actions/footers */
+  .card-footer {
+    @apply px-6 py-4 border-t border-gray-200 bg-gray-50;
+  }
+
+  /* Clickable stat/metric card with hover effect (NOT a passive container) */
+  /* Note: add `group` inline in HTML if children use group-hover:* */
+  .stat-card {
+    @apply bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden
+           p-5 hover:border-primary-300 transition-colors;
+  }
+
+
+  /* ── Buttons ────────────────────────────────────────────────── */
+
+  /* Shared button base — every button inherits this. */
+  /* Apply together with a color variant: class="btn btn-primary" */
+  .btn {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-lg px-4 py-2
+           text-sm font-medium transition
+           focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  /* Primary action — indigo/brand fill */
+  .btn-primary {
+    @apply bg-primary-600 text-white shadow-sm
+           hover:bg-primary-700
+           focus-visible:outline-primary-600;
+  }
+
+  /* Secondary action — white with gray border */
+  .btn-secondary {
+    @apply bg-white text-gray-700 border border-gray-300
+           hover:bg-gray-50;
+  }
+
+  /* Destructive action — red fill */
+  .btn-danger {
+    @apply bg-red-600 text-white shadow-sm
+           hover:bg-red-700
+           focus-visible:outline-red-600;
+  }
+
+  /* Size modifier — smaller (12px) button */
+  .btn-sm {
+    @apply px-3 py-1.5 text-xs;
+  }
+
+  /* Width modifier — stretch to full container width */
+  .btn-full {
+    @apply w-full justify-center;
+  }
+
+
+  /* ── Badges ─────────────────────────────────────────────────── */
+
+  /* Base badge — always used with a color modifier */
+  .badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+
+  .badge-green  { @apply bg-green-100  text-green-800; }
+  .badge-yellow { @apply bg-yellow-100 text-yellow-800; }
+  .badge-red    { @apply bg-red-100    text-red-800; }
+  .badge-blue   { @apply bg-blue-100   text-blue-800; }
+  .badge-gray   { @apply bg-gray-100   text-gray-800; }
+  .badge-purple { @apply bg-purple-100 text-purple-800; }
+  .badge-teal   { @apply bg-teal-100   text-teal-800; }
+  /* Brand-color badge — responds to PHP branding */
+  .badge-indigo { @apply bg-primary-100 text-primary-800; }
+
+
+  /* ── Alerts ─────────────────────────────────────────────────── */
+
+  /* Alert banner base — always used with a type modifier */
+  .alert {
+    @apply p-4 rounded-lg border text-sm;
+  }
+
+  .alert-info    { @apply bg-blue-50    border-blue-200    text-blue-800; }
+  .alert-success { @apply bg-green-50   border-green-200   text-green-800; }
+  .alert-warning { @apply bg-yellow-50  border-yellow-200  text-yellow-800; }
+  .alert-danger  { @apply bg-red-50     border-red-200     text-red-800; }
+
+
+  /* ── Icon Containers ─────────────────────────────────────────── */
+
+  /* Square icon box — rounded-lg, fixed 40×40. Add bg-* color inline. */
+  .icon-box {
+    @apply flex-shrink-0 inline-flex items-center justify-center h-10 w-10 rounded-lg;
+  }
+
+  /* Circle icon container — use h-* w-* size utilities inline. */
+  .icon-circle {
+    @apply flex-shrink-0 inline-flex items-center justify-center rounded-full;
+  }
+
+
+  /* ── Navigation ─────────────────────────────────────────────── */
+
+  /* Sidebar nav item base */
+  /* Note: add `group` inline in HTML if children use group-hover:* */
+  .nav-link {
+    @apply flex items-center gap-x-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors;
+  }
+
+  /* Active state — add alongside .nav-link */
+  .nav-link-active {
+    @apply bg-primary-700 text-white;
+  }
+
+  /* Section divider label in sidebar (e.g. "Operations", "System") */
+  .nav-section-label {
+    @apply text-xs font-semibold leading-6 uppercase tracking-wider;
+  }
+
+
+  /* ── Filter Tabs ─────────────────────────────────────────────── */
+
+  /* Horizontal filter/status toggle tab */
+  .filter-tab {
+    @apply px-3 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-gray-50 transition-colors;
+  }
+
+  /* Active state — add alongside .filter-tab */
+  .filter-tab-active {
+    @apply bg-primary-50 text-primary-700 hover:bg-primary-50;
+  }
+
+
+  /* ── AI Summary Prose ────────────────────────────────────────── */
+
+  /* Markdown-rendered content inside AI summary panels.
+     Styles the HTML elements emitted by Parsedown (h2, h3, p, ul, ol, li, strong, em). */
+  .prose-ai {
+    @apply text-sm leading-relaxed text-gray-700;
+  }
+  .prose-ai h2 {
+    @apply text-base font-semibold text-gray-900 mt-4 mb-2 first:mt-0;
+  }
+  .prose-ai h3 {
+    @apply text-sm font-semibold text-gray-900 mt-3 mb-1;
+  }
+  .prose-ai p {
+    @apply mb-3 last:mb-0;
+  }
+  .prose-ai ul {
+    @apply list-disc list-outside pl-5 mb-3 last:mb-0 space-y-1;
+  }
+  .prose-ai ol {
+    @apply list-decimal list-outside pl-5 mb-3 last:mb-0 space-y-1;
+  }
+  .prose-ai li {
+    @apply text-sm text-gray-700 leading-relaxed;
+  }
+  .prose-ai li:last-child {
+    @apply mb-0 pb-0;
+  }
+  .prose-ai strong {
+    @apply font-semibold text-gray-900;
+  }
+  .prose-ai em {
+    @apply italic;
+  }
+  .prose-ai code {
+    @apply text-xs bg-gray-100 rounded px-1 py-0.5 font-mono;
+  }
+
+  /* ── Empty States ────────────────────────────────────────────── */
+
+  /* Centered empty-list message inside a card or table */
+  .empty-state {
+    @apply px-6 py-12 text-center text-gray-500;
+  }
+
+
+  /* ── Sidebar Utilities ───────────────────────────────────────── */
+
+  /* Smooth slide-in/out for mobile sidebar panel */
+  .sidebar-transition {
+    transition: transform 0.3s ease-in-out;
+  }
+
+  /* Smooth fade for the mobile overlay backdrop */
+  .overlay-transition {
+    transition: opacity 0.3s ease-in-out;
+  }
+
+
+  /* ── Toast Notifications ─────────────────────────────────────── */
+
+  /* Fixed container for toast messages — top-right corner */
+  .toast-container {
+    @apply fixed top-4 right-4 z-[9999] flex flex-col gap-3 pointer-events-none;
+    max-width: min(24rem, calc(100vw - 2rem));
+  }
+
+  /* Individual toast — re-enable pointer events for interaction */
+  .toast {
+    @apply pointer-events-auto flex items-center gap-3 p-4 rounded-lg border shadow-lg text-sm;
+    animation: toast-slide-in 0.3s ease-out;
+  }
+
+  /* Dismissing state — applied by JS before removal */
+  .toast-dismissing {
+    animation: toast-slide-out 0.25s ease-in forwards;
+  }
+
+  /* Toast color variants */
+  .toast-success { @apply bg-green-50  border-green-200 text-green-800; }
+  .toast-error   { @apply bg-red-50    border-red-200   text-red-800; }
+  .toast-warning { @apply bg-yellow-50 border-yellow-200 text-yellow-800; }
+  .toast-info    { @apply bg-blue-50   border-blue-200  text-blue-800; }
+
+  /* Dismiss button inside toast */
+  .toast-dismiss {
+    @apply ml-auto flex-shrink-0 -mr-1 p-1 rounded-md opacity-60 hover:opacity-100 transition-opacity;
+  }
+
+  /* Thin scrollbar — light sidebar (user layout) */
+  .sidebar-scroll::-webkit-scrollbar          { width: 4px; }
+  .sidebar-scroll::-webkit-scrollbar-track    { background: transparent; }
+  .sidebar-scroll::-webkit-scrollbar-thumb    { background: rgba(156,163,175,0.4); border-radius: 2px; }
+  .sidebar-scroll::-webkit-scrollbar-thumb:hover { background: rgba(156,163,175,0.6); }
+
+  /* Thin scrollbar — dark sidebar (admin layout) */
+  .sidebar-scroll-dark::-webkit-scrollbar          { width: 4px; }
+  .sidebar-scroll-dark::-webkit-scrollbar-track    { background: transparent; }
+  .sidebar-scroll-dark::-webkit-scrollbar-thumb    { background: rgba(255,255,255,0.2); border-radius: 2px; }
+  .sidebar-scroll-dark::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.35); }
+
+}
+
+/* ── Toast Keyframes (outside @layer so they're always available) ── */
+
+@keyframes toast-slide-in {
+  from { opacity: 0; transform: translateX(1rem); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes toast-slide-out {
+  from { opacity: 1; transform: translateX(0); }
+  to   { opacity: 0; transform: translateX(1rem); }
+}

@@ -1,0 +1,28 @@
+{
+    "name": "formna/formna",
+    "description": "Self-hosted form management platform for organizations",
+    "type": "project",
+    "license": "AGPL-3.0-or-later",
+    "require": {
+        "php": "^8.2",
+        "bramus/router": "^1.6",
+        "phpmailer/phpmailer": "^6.9",
+        "robmorgan/phinx": "^0.16",
+        "erusev/parsedown": "^1.7"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^11.0"
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "sort-packages": true,
+        "platform": {
+            "php": "8.2.0"
+        }
+    },
+    "scripts": {
+        "test": "phpunit",
+        "install-app": "php bin/formna install",
+        "migrate": "php bin/formna migrate"
+    }
+}

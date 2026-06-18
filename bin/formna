@@ -1,0 +1,377 @@
+#!/usr/bin/env php
+<?php
+
+/**
+ * FORMNA CLI
+ *
+ * Usage:
+ *   php bin/formna <command> [options]
+ *
+ * Commands:
+ *   install         Run first-time setup (migrate + create admin)
+ *   migrate         Run database migrations
+ *   create-admin    Create a super-admin user
+ *   generate-key    Generate a random 32-character APP_KEY
+ *   queue-status    Show pending jobs in the email/webhook queues
+ *   check           Verify environment & dependencies
+ */
+
+define('FORMNA_ROOT', dirname(__DIR__));
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function cli_print(string $msg, string $color = ''): void {
+    $colors = [
+        'green'  => "\033[32m",
+        'red'    => "\033[31m",
+        'yellow' => "\033[33m",
+        'cyan'   => "\033[36m",
+        'bold'   => "\033[1m",
+        'reset'  => "\033[0m",
+    ];
+
+    $prefix = $color ? ($colors[$color] ?? '') : '';
+    $suffix = $color ? $colors['reset'] : '';
+
+    echo $prefix . $msg . $suffix . PHP_EOL;
+}
+
+function cli_error(string $msg): void {
+    cli_print("✗ " . $msg, 'red');
+}
+
+function cli_success(string $msg): void {
+    cli_print("✓ " . $msg, 'green');
+}
+
+function cli_info(string $msg): void {
+    cli_print("→ " . $msg, 'cyan');
+}
+
+function cli_prompt(string $question, bool $hidden = false): string {
+    echo $question . ': ';
+
+    if ($hidden && strpos(PHP_OS, 'WIN') === false) {
+        system('stty -echo');
+        $input = trim(fgets(STDIN));
+        system('stty echo');
+        echo PHP_EOL;
+    } else {
+        $input = trim(fgets(STDIN));
+    }
+
+    return $input;
+}
+
+// ── Commands ─────────────────────────────────────────────────────────────────
+
+function cmd_generate_key(): void {
+    $key = bin2hex(random_bytes(16)); // 32 hex characters
+    cli_success("Generated APP_KEY:");
+    echo PHP_EOL . "  " . $key . PHP_EOL . PHP_EOL;
+    cli_info("Add this to your .env file:");
+    echo "  APP_KEY=" . $key . PHP_EOL;
+}
+
+function cmd_check(): void {
+    cli_print("FORMNA Environment Check", 'bold');
+    echo PHP_EOL;
+
+    $errors = 0;
+
+    // PHP version
+    if (version_compare(PHP_VERSION, '8.2.0', '>=')) {
+        cli_success("PHP " . PHP_VERSION);
+    } else {
+        cli_error("PHP 8.2+ required (found " . PHP_VERSION . ")");
+        $errors++;
+    }
+
+    // Required extensions
+    $extensions = ['pdo', 'pdo_mysql', 'mbstring', 'openssl', 'json', 'curl', 'fileinfo'];
+    foreach ($extensions as $ext) {
+        if (extension_loaded($ext)) {
+            cli_success("ext-{$ext}");
+        } else {
+            cli_error("ext-{$ext} missing");
+            $errors++;
+        }
+    }
+
+    // Composer vendor
+    if (file_exists(FORMNA_ROOT . '/vendor/autoload.php')) {
+        cli_success("Composer dependencies installed");
+    } else {
+        cli_error("Composer dependencies not installed (run: composer install)");
+        $errors++;
+    }
+
+    // .env file
+    if (file_exists(FORMNA_ROOT . '/.env')) {
+        cli_success(".env file exists");
+    } else {
+        cli_error(".env file missing (copy .env.example to .env)");
+        $errors++;
+    }
+
+    // Storage directories
+    $dirs = ['storage/cache', 'storage/logs', 'storage/uploads', 'storage/reports'];
+    foreach ($dirs as $dir) {
+        $path = FORMNA_ROOT . '/' . $dir;
+        if (is_dir($path) && is_writable($path)) {
+            cli_success("{$dir}/ writable");
+        } elseif (is_dir($path)) {
+            cli_error("{$dir}/ exists but is not writable");
+            $errors++;
+        } else {
+            cli_error("{$dir}/ missing");
+            $errors++;
+        }
+    }
+
+    // Public uploads
+    $branding = FORMNA_ROOT . '/public/uploads/branding';
+    if (is_dir($branding) && is_writable($branding)) {
+        cli_success("public/uploads/branding/ writable");
+    } else {
+        cli_error("public/uploads/branding/ not writable");
+        $errors++;
+    }
+
+    echo PHP_EOL;
+    if ($errors === 0) {
+        cli_success("All checks passed!");
+    } else {
+        cli_error("{$errors} issue(s) found.");
+        exit(1);
+    }
+}
+
+function cmd_migrate(): void {
+    cli_info("Running database migrations...");
+
+    $phinx = FORMNA_ROOT . '/vendor/bin/phinx';
+    $config = FORMNA_ROOT . '/phinx.php';
+
+    if (!file_exists($phinx)) {
+        cli_error("Phinx not found. Run: composer install");
+        exit(1);
+    }
+
+    $cmd = escapeshellarg($phinx) . ' migrate -c ' . escapeshellarg($config);
+    passthru($cmd, $exitCode);
+
+    if ($exitCode === 0) {
+        cli_success("Migrations complete.");
+    } else {
+        cli_error("Migration failed (exit code: {$exitCode})");
+        exit(1);
+    }
+}
+
+function cmd_create_admin(): void {
+    cli_print("Create Super Admin", 'bold');
+    echo PHP_EOL;
+
+    // Load environment
+    require_once FORMNA_ROOT . '/vendor/autoload.php';
+    require_once FORMNA_ROOT . '/src/core/env.php';
+    require_once FORMNA_ROOT . '/src/core/db.php';
+
+    $email = cli_prompt("Email");
+    $name  = cli_prompt("Full name");
+    $pass  = cli_prompt("Password (min 8 chars)", true);
+
+    if (strlen($pass) < 8) {
+        cli_error("Password must be at least 8 characters.");
+        exit(1);
+    }
+
+    $hash = password_hash($pass, PASSWORD_BCRYPT, ['cost' => 12]);
+
+    try {
+        require_once FORMNA_ROOT . '/src/core/db.php';
+        $pdo = db();
+
+        // Check if email already exists
+        $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
+        $stmt->execute([$email]);
+        if ($stmt->fetch()) {
+            cli_error("A user with that email already exists.");
+            exit(1);
+        }
+
+        // Generate UUID
+        $uuid = bin2hex(random_bytes(16));
+        $uuid = substr($uuid, 0, 8) . '-' . substr($uuid, 8, 4) . '-' . substr($uuid, 12, 4) . '-' . substr($uuid, 16, 4) . '-' . substr($uuid, 20);
+
+        $stmt = $pdo->prepare(
+            "INSERT INTO users (uuid, email, name, password_hash, role, status, email_verified_at, created_at, updated_at)
+             VALUES (?, ?, ?, ?, 'super_admin', 'active', NOW(), NOW(), NOW())"
+        );
+        $stmt->execute([$uuid, $email, $name, $hash]);
+
+        cli_success("Super admin created: {$email}");
+    } catch (\PDOException $e) {
+        cli_error("Database error: " . $e->getMessage());
+        exit(1);
+    }
+}
+
+function cmd_queue_status(): void {
+    require_once FORMNA_ROOT . '/vendor/autoload.php';
+    require_once FORMNA_ROOT . '/src/core/env.php';
+    require_once FORMNA_ROOT . '/src/core/db.php';
+
+    try {
+        $pdo = db();
+
+        cli_print("Queue Status", 'bold');
+        echo PHP_EOL;
+
+        // Job queue (emails)
+        $stmt = $pdo->query("
+            SELECT 
+                CASE 
+                    WHEN locked_at IS NOT NULL THEN 'processing'
+                    WHEN failed_at IS NOT NULL THEN 'failed'
+                    ELSE 'pending'
+                END as status,
+                COUNT(*) as count 
+            FROM job_queue 
+            GROUP BY status
+        ");
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        cli_print("Job Queue (Emails):", 'cyan');
+        if (empty($rows)) {
+            echo "  (empty)" . PHP_EOL;
+        } else {
+            foreach ($rows as $row) {
+                echo "  {$row['status']}: {$row['count']}" . PHP_EOL;
+            }
+        }
+
+        echo PHP_EOL;
+
+        // Webhook log
+        $stmt = $pdo->query("SELECT status, COUNT(*) as count FROM webhook_log GROUP BY status");
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        cli_print("Webhook Queue:", 'cyan');
+        if (empty($rows)) {
+            echo "  (empty)" . PHP_EOL;
+        } else {
+            foreach ($rows as $row) {
+                echo "  {$row['status']}: {$row['count']}" . PHP_EOL;
+            }
+        }
+    } catch (\PDOException $e) {
+        cli_error("Database error: " . $e->getMessage());
+        exit(1);
+    }
+}
+
+function cmd_install(): void {
+    cli_print("", '');
+    cli_print("╔══════════════════════════════════════╗", 'cyan');
+    cli_print("║       FORMNA — First-Time Setup      ║", 'cyan');
+    cli_print("╚══════════════════════════════════════╝", 'cyan');
+    echo PHP_EOL;
+
+    // Check .env
+    if (!file_exists(FORMNA_ROOT . '/.env')) {
+        cli_info("Creating .env from .env.example...");
+        
+        if (!file_exists(FORMNA_ROOT . '/.env.example')) {
+            cli_error(".env.example not found.");
+            exit(1);
+        }
+        
+        // Copy .env.example to .env
+        copy(FORMNA_ROOT . '/.env.example', FORMNA_ROOT . '/.env');
+        cli_success(".env file created.");
+        echo PHP_EOL;
+    }
+    
+    // Check if APP_KEY needs to be generated (missing .env or placeholder value)
+    $env_content = file_get_contents(FORMNA_ROOT . '/.env');
+    if (strpos($env_content, 'APP_KEY=change-me-to-exactly-32-char-key') !== false) {
+        cli_info("Generating APP_KEY...");
+        $key = bin2hex(random_bytes(16)); // 32 hex characters
+        
+        $env_content = str_replace(
+            'APP_KEY=change-me-to-exactly-32-char-key',
+            'APP_KEY=' . $key,
+            $env_content
+        );
+        file_put_contents(FORMNA_ROOT . '/.env', $env_content);
+        
+        cli_success("APP_KEY generated and saved to .env");
+        echo PHP_EOL;
+    }
+    
+    if (!file_exists(FORMNA_ROOT . '/.env')) {
+        cli_info("Review and update database credentials in .env as needed.");
+        echo PHP_EOL;
+    }
+
+    // Run checks
+    cli_info("Running environment checks...");
+    echo PHP_EOL;
+    cmd_check();
+    echo PHP_EOL;
+
+    // Migrate
+    cmd_migrate();
+    echo PHP_EOL;
+
+    // Create admin
+    cli_info("Now let's create your first admin account.");
+    echo PHP_EOL;
+    cmd_create_admin();
+    echo PHP_EOL;
+
+    cli_print("╔══════════════════════════════════════╗", 'green');
+    cli_print("║         Setup Complete! 🎉           ║", 'green');
+    cli_print("╚══════════════════════════════════════╝", 'green');
+    echo PHP_EOL;
+    cli_info("Point your web server to the public/ directory and visit your APP_URL.");
+}
+
+// ── Router ───────────────────────────────────────────────────────────────────
+
+$command = $argv[1] ?? null;
+
+if (!$command || in_array($command, ['-h', '--help', 'help'])) {
+    echo <<<HELP
+
+  FORMNA CLI
+
+  Usage: php bin/formna <command>
+
+  Commands:
+    install         Run first-time setup (checks + migrate + create admin)
+    migrate         Run database migrations
+    create-admin    Create a super-admin user interactively
+    generate-key    Generate a random 32-character APP_KEY
+    queue-status    Show pending jobs in the queues
+    check           Verify environment & dependencies
+
+HELP;
+    exit(0);
+}
+
+match ($command) {
+    'install'      => cmd_install(),
+    'migrate'      => cmd_migrate(),
+    'create-admin' => cmd_create_admin(),
+    'generate-key' => cmd_generate_key(),
+    'queue-status' => cmd_queue_status(),
+    'check'        => cmd_check(),
+    default        => (function() use ($command) {
+        cli_error("Unknown command: {$command}");
+        cli_info("Run 'php bin/formna help' for available commands.");
+        exit(1);
+    })(),
+};

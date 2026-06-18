@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="tests/bootstrap.php"
+         colors="true"
+         failOnRisky="true"
+         failOnWarning="true">
+    <php>
+        <server name="REQUEST_URI" value="/admin"/>
+    </php>
+    <testsuites>
+        <testsuite name="Core">
+            <directory>tests/core</directory>
+        </testsuite>
+        <testsuite name="Cron">
+            <directory>tests/cron</directory>
+            <exclude>tests/cron/test_cron_bootstrap.php</exclude>
+        </testsuite>
+        <testsuite name="Forms">
+            <directory>tests/forms</directory>
+        </testsuite>
+        <testsuite name="Mfa">
+            <directory>tests/mfa</directory>
+        </testsuite>
+        <testsuite name="Users">
+            <directory>tests/users</directory>
+        </testsuite>
+    </testsuites>
+</phpunit>

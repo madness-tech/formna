@@ -1,0 +1,45 @@
+# Dependencies
+vendor/
+node_modules/
+
+# Git
+.git/
+.gitignore
+
+# Environment
+.env
+.env.*
+
+# Storage (runtime data)
+storage/logs/*
+storage/cache/*
+storage/reports/*
+storage/uploads/*
+
+# Public uploads
+public/uploads/branding/*
+
+# Testing
+.phpunit.result.cache
+coverage/
+
+# IDE & Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# AI Assistants
+.rooignore
+.roorules
+.clineignore
+.clinerules
+
+# Documentation (LICENSE must be included for AGPL compliance)
+docs/
+README.md

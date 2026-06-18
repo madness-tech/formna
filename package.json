@@ -1,0 +1,11 @@
+{
+  "name": "formna",
+  "private": true,
+  "scripts": {
+    "css:build": "tailwindcss -i resources/css/app.src.css -o public/css/app.css --minify",
+    "css:watch": "tailwindcss -i resources/css/app.src.css -o public/css/app.css --watch"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4"
+  }
+}
