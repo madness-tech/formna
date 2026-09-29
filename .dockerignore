@@ -19,6 +19,9 @@ storage/uploads/*
 # Public uploads
 public/uploads/branding/*
 
+# Local dev tooling
+.dev/
+
 # Testing
 .phpunit.result.cache
 coverage/

@@ -22,6 +22,9 @@
 /public/uploads/branding/*
 !/public/uploads/branding/.gitkeep
 
+# ── Local dev tooling (never committed) ─────────────────────────────────────
+/.dev/
+
 # ── Testing ──────────────────────────────────────────────────────────────────
 .phpunit.result.cache
 /coverage/
